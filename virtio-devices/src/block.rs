@@ -19,8 +19,8 @@ use crate::GuestMemoryMmap;
 use crate::VirtioInterrupt;
 use anyhow::anyhow;
 use block::{
-    async_io::AsyncIo, async_io::AsyncIoError, async_io::DiskFile, build_serial, Request,
-    RequestType, VirtioBlockConfig,
+    async_io::AsyncIo, async_io::AsyncIoError, async_io::DiskFile, build_serial, ExecuteAsync,
+    Request, RequestType, VirtioBlockConfig,
 };
 use rate_limiter::group::{RateLimiterGroup, RateLimiterGroupHandle};
 use rate_limiter::TokenType;
@@ -211,7 +211,11 @@ impl BlockEpollHandler {
                 desc_chain.head_index() as u64,
             );
 
-            if let Ok(true) = result {
+            if let Ok(ExecuteAsync {
+                async_complete: true,
+                ..
+            }) = result
+            {
                 self.inflight_requests
                     .push_back((desc_chain.head_index(), request));
             } else {
